@@ -34,7 +34,8 @@ router.post("/", decodeToken, async (req, res, next) => {
     await comment.save();
 
     // Return new document as JSON
-    res.status(201).send(comment.toJSON());
+    const populated = await comment.populate("user").execPopulate();
+    res.status(201).send(populated.toJSON());
   } catch (error) {
     next(createError(500, error.message));
   }
@@ -52,7 +53,7 @@ router.put("/:comment_id", decodeToken, async (req, res, next) => {
     }
 
     // Verify that the user owns ID'd comment document
-    const comment = await Comment.findById(req.params.post_id);
+    const comment = await Comment.findById(req.params.comment_id);
 
     if (!comment.isOwnedBy(req.user)) {
       return next(createError(401, "Unauthorized"));
@@ -63,6 +64,7 @@ router.put("/:comment_id", decodeToken, async (req, res, next) => {
     await comment.save();
 
     // Return new document as JSON
+    await comment.execPopulate("user", "username");
     res.status(201).send(comment.toJSON());
   } catch (error) {
     next(createError(500, error.message));
@@ -75,7 +77,7 @@ router.put("/:comment_id", decodeToken, async (req, res, next) => {
 router.delete("/:comment_id", decodeToken, async (req, res, next) => {
   try {
     // Verify that the user owns ID'd comment document
-    const comment = await Comment.findById(req.params.post_id);
+    const comment = await Comment.findById(req.params.comment_id);
 
     if (!comment.isOwnedBy(req.user)) {
       return next(createError(401, "Unauthorized"));
@@ -87,13 +89,14 @@ router.delete("/:comment_id", decodeToken, async (req, res, next) => {
     // Return `No Content` response
     res.status(204).send();
   } catch (error) {
+    console.log(error);
     next(createError(500, error.message));
   }
 });
 
 const commentSchema = Joi.object({
   text: Joi.string().required(),
-  post: Joi.string().required(),
+  post: Joi.string(),
   parent: Joi.string(),
 });
 

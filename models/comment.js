@@ -20,11 +20,7 @@ const commentSchema = new Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Comment",
   },
-  children: [{ type: mongoose.Schema.Types.ObjectId, ref: "Comment" }],
-  points: {
-    type: Number,
-    default: 1,
-  },
+  points: { type: Number, default: 1 },
   createdAt: {
     type: Date,
     require: true,
@@ -42,7 +38,6 @@ commentSchema.pre("save", async function (next) {
     try {
       const Post = mongoose.model("Post");
       const User = mongoose.model("User");
-      const Comment = mongoose.model("Comment");
 
       const post = await Post.findById(this.post);
       const user = await User.findById(this.user);
@@ -52,12 +47,6 @@ commentSchema.pre("save", async function (next) {
 
       user.comments.push(this.id);
       user.save();
-
-      if (this.parent) {
-        const parent = await Comment.findById(this.parent);
-        parent.children.push(this.id);
-        parent.save();
-      }
 
       next();
     } catch (err) {
@@ -73,7 +62,6 @@ commentSchema.post("remove", async () => {
   try {
     const Post = mongoose.model("Post");
     const User = mongoose.model("User");
-    const Comment = mongoose.model("Comment");
 
     const post = await Post.findById(this.post);
     const user = await User.findById(this.user);
@@ -83,16 +71,8 @@ commentSchema.post("remove", async () => {
 
     user.comments = user.comments.filter((c) => c.id !== this.id);
     user.save();
-
-    if (this.parent) {
-      const parent = await Comment.findById(this.parent);
-      parent.children = parent.children.filter((c) => c.id !== this.id);
-      parent.save();
-    }
-
-    next();
   } catch (err) {
-    next(err);
+    console.log(err);
   }
 });
 
@@ -105,6 +85,23 @@ commentSchema.pre("save", function (next) {
 
 commentSchema.methods.isOwnedBy = function (userId) {
   return this.user.toString() === userId;
+};
+
+commentSchema.methods.updatePoints = async function () {
+  const Vote = mongoose.model("CommentVote");
+  const votes = await Vote.find({ comment: this._id });
+
+  this.points = votes.reduce((sum, vote) => {
+    if (vote.isUpvote) {
+      return sum + 1;
+    } else {
+      return sum - 1;
+    }
+  }, 1);
+
+  this.save();
+
+  return this.points;
 };
 
 const commentModel = mongoose.model("Comment", commentSchema);

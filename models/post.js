@@ -2,6 +2,10 @@ const mongoose = require("mongoose"),
   { Schema } = mongoose;
 
 const postSchema = new Schema({
+  title: {
+    type: String,
+    required: true,
+  },
   text: {
     type: String,
     required: true,
@@ -9,11 +13,10 @@ const postSchema = new Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
+    ref: "User",
   },
-  points: {
-    type: Number,
-    default: 1,
-  },
+  points: Number,
+  commentCount: Number,
   comments: [
     {
       type: mongoose.Schema.Types.ObjectId,
@@ -86,6 +89,23 @@ postSchema.pre("save", function (next) {
 
 postSchema.methods.isOwnedBy = function (userId) {
   return this.user.toString() === userId;
+};
+
+postSchema.methods.updatePoints = async function () {
+  const Vote = mongoose.model("PostVote");
+  const votes = await Vote.find({ post: this._id });
+
+  this.points = votes.reduce((sum, vote) => {
+    if (vote.isUpvote) {
+      return sum + 1;
+    } else {
+      return sum - 1;
+    }
+  }, 1);
+
+  this.save();
+
+  return this.points;
 };
 
 const postModel = mongoose.model("Post", postSchema);

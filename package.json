@@ -22,9 +22,10 @@
   "scripts": {
     "start": "NODE_ENV=production node ./bin/index",
     "heroku-postbuild": "cd client && npm install && npm run build",
-    "dev": "nodemon ./bin/index",
+    "dev": "NODE_ENV=development nodemon ./bin/index",
     "dev--no-restart": "node ./bin/index",
-    "test": "NODE_ENV=test mocha --exit --timeout 30000"
+    "test": "NODE_ENV=test mocha --exit --timeout 30000",
+    "populate": "node ./utils/populateDb.js"
   },
   "author": "",
   "license": "ISC"

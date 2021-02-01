@@ -1,4 +1,10 @@
-const { User, Post, Comment } = require("../models/index");
+const {
+  User,
+  Post,
+  Comment,
+  PostVote,
+  CommentVote,
+} = require("../models/index");
 const { decodeToken } = require("../middleware/auth");
 const express = require("express");
 const router = express.Router();
@@ -10,15 +16,32 @@ const createError = require("http-errors");
 */
 router.get("/", async (req, res, next) => {
   try {
-    const posts = await Post.find();
+    const posts = await Post.find().populate("user", "username");
 
-    // Attach comments to each post
-    await Promise.all(
-      posts.map(async (p) => {
-        p.comments = await Comment.find({ post: p.id });
-      })
-    );
+    for (let post of posts) {
+      // Attach updated comment count to each post
+      const res = await Comment.aggregate([
+        { $match: { post: post._id } },
+        { $count: "count" },
+      ]);
 
+      const commentCount = res[0].count;
+
+      console.log(commentCount);
+
+      post.commentCount = commentCount;
+
+      // Calculate the vote total
+      const votes = await PostVote.find({ post: post._id });
+
+      post.points = votes.reduce((sum, vote) => {
+        if (vote.isUpvote) {
+          return sum + 1;
+        } else {
+          return sum - 1;
+        }
+      }, 1);
+    }
     res.status(200).send(posts);
   } catch (err) {
     next(createError(400, err.message));
@@ -30,10 +53,42 @@ router.get("/", async (req, res, next) => {
 */
 router.get("/:post_id", async (req, res, next) => {
   try {
-    const post = await Post.findById(req.params.post_id);
+    const post = await Post.findById(req.params.post_id).populate(
+      "user",
+      "username"
+    );
 
     // Attach comments
-    post.comments = await Comment.find({ post: post.id });
+    const comments = await Comment.find({ post: post.id }).populate(
+      "user",
+      "username"
+    );
+    comments.forEach(async (comment) => {
+      // Retrieve votes for this comment
+      const votes = await CommentVote.find({ comment: comment._id });
+
+      // Calculate total
+      comment.points = votes.reduce((sum, vote) => {
+        if (vote.isUpvote) {
+          return sum + 1;
+        } else {
+          return sum - 1;
+        }
+      }, 1);
+    });
+
+    post.comments = comments;
+
+    // Calculate the vote total
+    const votes = await PostVote.find({ post: post._id });
+
+    post.points = votes.reduce((sum, vote) => {
+      if (vote.isUpvote) {
+        return sum + 1;
+      } else {
+        return sum - 1;
+      }
+    }, 1);
 
     res.status(200).send(post);
   } catch (err) {
@@ -69,12 +124,6 @@ router.post("/", decodeToken, async (req, res, next) => {
 */
 router.put("/:post_id", decodeToken, async (req, res, next) => {
   try {
-    // Validate the post data
-    const validationResult = postSchema.validate(req.body);
-    if (validationResult.error) {
-      return next(createError(400, validationResult.error));
-    }
-
     // Verify that the user owns ID'd post document
     const post = await Post.findById(req.params.post_id);
 
@@ -123,6 +172,7 @@ router.delete("/:post_id", decodeToken, async (req, res, next) => {
 });
 
 const postSchema = Joi.object({
+  title: Joi.string().required(),
   text: Joi.string().required(),
 });
 

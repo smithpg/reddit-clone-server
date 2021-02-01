@@ -8,7 +8,12 @@ module.exports.decodeToken = async function (req, res, next) {
      *  Attempt to decode the token and attach to request object
      */
     const decoded = await jwt.decode(token);
-    req.user = decoded.id;
+
+    console.log(JSON.stringify(decoded));
+
+    req.user = decoded._id;
+
+    console.log(`req.user = ${req.user}`);
 
     next();
   } catch (error) {

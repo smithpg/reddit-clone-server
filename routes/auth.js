@@ -19,9 +19,14 @@ const createError = require("http-errors");
 router.post("/signup", async (req, res, next) => {
   try {
     const newUser = await User.create(req.body);
-    const token = jwt.sign({ _id: newUser._id }, process.env.JWT_SECRET);
+    const token = jwt.sign(
+      { _id: newUser._id, username: newUser.username },
+      process.env.JWT_SECRET
+    );
 
-    res.status(201).send({ token, name: newUser.name, id: newUser._id });
+    res
+      .status(201)
+      .send({ token, username: newUser.username, id: newUser._id });
   } catch (err) {
     // MongoError with code 11000 indicates duplicate key
     if (err.code === 11000) {
@@ -37,7 +42,10 @@ router.post("/login", async (req, res, next) => {
     return next(createError(400, validationResult.error));
   }
 
-  let user = await User.findOne({ email: req.body.email });
+  let user = await User.findOne(
+    { username: req.body.username },
+    "password username"
+  );
   if (!user) {
     return next(createError(400, "Invalid email or password"));
   }
@@ -46,13 +54,16 @@ router.post("/login", async (req, res, next) => {
   if (!isvalidpassword)
     return next(createError(400, "Invalid email or password"));
 
-  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+  const token = jwt.sign(
+    { _id: user._id, username: user.username },
+    process.env.JWT_SECRET
+  );
 
   res.status(200).send({ token, name: user.name, id: user._id });
 });
 
 const loginRequestBodySchema = Joi.object({
-  email: Joi.string().required().email(),
+  username: Joi.string().required(),
   password: Joi.string().required(),
 });
 

@@ -2,6 +2,7 @@ const mongoose = require("mongoose"),
   User = require("./user"),
   Comment = require("./comment"),
   Post = require("./post"),
+  { PostVote, CommentVote } = require("./vote"),
   { DB_PASSWORD, DB_USER, DB_NAME } = process.env;
 
 const connectionString =
@@ -19,3 +20,5 @@ mongoose.connect(connectionString, {
 module.exports.User = User;
 module.exports.Post = Post;
 module.exports.Comment = Comment;
+module.exports.PostVote = PostVote;
+module.exports.CommentVote = CommentVote;
