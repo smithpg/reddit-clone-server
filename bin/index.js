@@ -6,6 +6,8 @@ require("dotenv").config();
 
 var app = require("../app");
 var http = require("http");
+var fs = require("fs");
+var https = require("https");
 
 /**
  * Get port from environment and store in Express.
@@ -15,10 +17,20 @@ var port = normalizePort(process.env.PORT || "4000");
 app.set("port", port);
 
 /**
- * Create HTTP server.
+ * Create HTTP or HTTPS server.
  */
 
-var server = http.createServer(app);
+var server;
+if (process.env.USE_HTTPS == "true") {
+  const options = {
+    key: fs.readFileSync(process.env.KEY_FILE_PATH),
+    cert: fs.readFileSync(process.env.CERT_FILE_PATH),
+  };
+
+  server = https.createServer(options, app);
+} else {
+  server = http.createServer(app);
+}
 
 /**
  * Listen on provided port, on all network interfaces.
