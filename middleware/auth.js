@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const createError = require("http-errors");
+const { User } = require("../models");
 
 module.exports.decodeToken = async function (req, res, next) {
   try {
@@ -11,9 +12,9 @@ module.exports.decodeToken = async function (req, res, next) {
 
     console.log(JSON.stringify(decoded));
 
-    req.user = decoded._id;
+    req.user = await User.findById(decoded._id);
 
-    console.log(`req.user = ${req.user}`);
+    console.log(`req.user._id = ${req.user._id}`);
 
     next();
   } catch (error) {
