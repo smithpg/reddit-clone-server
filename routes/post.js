@@ -18,30 +18,6 @@ router.get("/", async (req, res, next) => {
   try {
     const posts = await Post.find().populate("user", "username");
 
-    for (let post of posts) {
-      // Attach updated comment count to each post
-      const res = await Comment.aggregate([
-        { $match: { post: post._id } },
-        { $count: "count" },
-      ]);
-
-      const commentCount = res[0].count;
-
-      console.log(commentCount);
-
-      post.commentCount = commentCount;
-
-      // Calculate the vote total
-      const votes = await PostVote.find({ post: post._id });
-
-      post.points = votes.reduce((sum, vote) => {
-        if (vote.isUpvote) {
-          return sum + 1;
-        } else {
-          return sum - 1;
-        }
-      }, 1);
-    }
     res.status(200).send(posts);
   } catch (err) {
     next(createError(400, err.message));
@@ -63,32 +39,8 @@ router.get("/:post_id", async (req, res, next) => {
       "user",
       "username"
     );
-    comments.forEach(async (comment) => {
-      // Retrieve votes for this comment
-      const votes = await CommentVote.find({ comment: comment._id });
-
-      // Calculate total
-      comment.points = votes.reduce((sum, vote) => {
-        if (vote.isUpvote) {
-          return sum + 1;
-        } else {
-          return sum - 1;
-        }
-      }, 1);
-    });
 
     post.comments = comments;
-
-    // Calculate the vote total
-    const votes = await PostVote.find({ post: post._id });
-
-    post.points = votes.reduce((sum, vote) => {
-      if (vote.isUpvote) {
-        return sum + 1;
-      } else {
-        return sum - 1;
-      }
-    }, 1);
 
     res.status(200).send(post);
   } catch (err) {
@@ -108,7 +60,7 @@ router.post("/", decodeToken, async (req, res, next) => {
     }
 
     // Create a new post document
-    const data = { ...req.body, user: req.user };
+    const data = { ...req.body, user: req.user._id };
     const post = new Post(data);
     await post.save();
 
@@ -127,7 +79,7 @@ router.put("/:post_id", decodeToken, async (req, res, next) => {
     // Verify that the user owns ID'd post document
     const post = await Post.findById(req.params.post_id);
 
-    if (!post.isOwnedBy(req.user)) {
+    if (!post.isOwnedBy(req.user._id)) {
       return next(createError(401, "Unauthorized"));
     }
 
@@ -150,7 +102,7 @@ router.delete("/:post_id", decodeToken, async (req, res, next) => {
     // Verify that the user owns ID'd post document
     const post = await Post.findById(req.params.post_id);
 
-    if (!post.isOwnedBy(req.user)) {
+    if (!post.isOwnedBy(req.user._id)) {
       return next(createError(401, "Unauthorized"));
     }
 
