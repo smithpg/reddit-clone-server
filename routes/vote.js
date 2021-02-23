@@ -19,7 +19,7 @@ router.post("/post/:post_id", decodeToken, async (req, res, next) => {
 
     // If the user has already voted on this post ...
     const existingVote = await PostVote.findOne({
-      user: req.user,
+      user: req.user._id,
       post: req.params.post_id,
     });
 
@@ -31,7 +31,7 @@ router.post("/post/:post_id", decodeToken, async (req, res, next) => {
       }
     } else {
       const vote = new PostVote({
-        user: req.user,
+        user: req.user._id,
         post: req.params.post_id,
         isUpvote,
       });
@@ -55,7 +55,7 @@ router.post("/comment/:comment_id", decodeToken, async (req, res, next) => {
 
     // If the user has already voted on this comment ...
     const existingVote = await CommentVote.findOne({
-      user: req.user,
+      user: req.user._id,
       comment: req.params.comment_id,
     });
 
@@ -67,7 +67,7 @@ router.post("/comment/:comment_id", decodeToken, async (req, res, next) => {
       }
     } else {
       const vote = new CommentVote({
-        user: req.user,
+        user: req.user._id,
         comment: req.params.comment_id,
         isUpvote,
       });
@@ -98,7 +98,7 @@ router.get("/user", decodeToken, async (req, res) => {
   */
 
   let votes;
-  const voteQuery = { user: req.user };
+  const voteQuery = { user: req.user._id };
 
   if (req.query.post) {
     // fiter by post ID if one has been specified
@@ -134,7 +134,7 @@ router.delete("/", decodeToken, async (req, res, next) => {
   if (req.query.post) {
     const vote = await PostVote.findOne({
       post: req.query.post,
-      user: req.user,
+      user: req.user._id,
     });
     console.log(vote);
     await vote.remove();
@@ -146,7 +146,7 @@ router.delete("/", decodeToken, async (req, res, next) => {
   } else if (req.query.comment) {
     const vote = await CommentVote.findOne({
       comment: req.query.comment,
-      user: req.user,
+      user: req.user._id,
     });
     await vote.remove();
 

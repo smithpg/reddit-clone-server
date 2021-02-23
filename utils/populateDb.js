@@ -13,6 +13,8 @@ async function main() {
   });
 
   console.log("Done populating DB.");
+
+  process.exit(0);
 }
 
 main();

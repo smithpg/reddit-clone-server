@@ -29,7 +29,7 @@ router.post("/", decodeToken, async (req, res, next) => {
     }
 
     // Create a new comment document
-    const data = { ...req.body, user: req.user };
+    const data = { ...req.body, user: req.user._id };
     const comment = new Comment(data);
     await comment.save();
 
@@ -55,7 +55,7 @@ router.put("/:comment_id", decodeToken, async (req, res, next) => {
     // Verify that the user owns ID'd comment document
     const comment = await Comment.findById(req.params.comment_id);
 
-    if (!comment.isOwnedBy(req.user)) {
+    if (!comment.isOwnedBy(req.user._id)) {
       return next(createError(401, "Unauthorized"));
     }
 
@@ -79,7 +79,7 @@ router.delete("/:comment_id", decodeToken, async (req, res, next) => {
     // Verify that the user owns ID'd comment document
     const comment = await Comment.findById(req.params.comment_id);
 
-    if (!comment.isOwnedBy(req.user)) {
+    if (!comment.isOwnedBy(req.user._id)) {
       return next(createError(401, "Unauthorized"));
     }
 
