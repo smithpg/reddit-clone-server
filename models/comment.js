@@ -43,6 +43,7 @@ commentSchema.pre("save", async function (next) {
       const user = await User.findById(this.user);
 
       post.comments.push(this.id);
+      post.commentCount = post.comments.length;
       post.save();
 
       user.comments.push(this.id);
@@ -67,6 +68,7 @@ commentSchema.post("remove", async () => {
     const user = await User.findById(this.user);
 
     post.comments = post.comments.filter((c) => c.id !== this.id);
+    post.commentCount--;
     post.save();
 
     user.comments = user.comments.filter((c) => c.id !== this.id);

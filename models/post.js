@@ -15,8 +15,8 @@ const postSchema = new Schema({
     required: true,
     ref: "User",
   },
-  points: Number,
-  commentCount: Number,
+  points: { type: Number, default: 1 },
+  commentCount: { type: Number, default: 0 },
   comments: [
     {
       type: mongoose.Schema.Types.ObjectId,
