@@ -2,7 +2,6 @@ const { User, Post, Comment } = require("../models/index");
 const { decodeToken } = require("../middleware/auth");
 const express = require("express");
 const router = express.Router();
-const Joi = require("joi");
 const createError = require("http-errors");
 
 /*
@@ -34,7 +33,7 @@ router.put("/:post_id", decodeToken, async (req, res, next) => {
     // Verify that the user owns ID'd post document
     const post = await Post.findById(req.params.post_id);
 
-    if (!post.isOwnedBy(req.user)) {
+    if (!post.isOwnedBy(req.user._id)) {
       return next(createError(401, "Unauthorized"));
     }
 
@@ -57,7 +56,7 @@ router.delete("/:post_id", decodeToken, async (req, res, next) => {
     // Verify that the user owns ID'd post document
     const post = await Post.findById(req.params.post_id);
 
-    if (!post.isOwnedBy(req.user)) {
+    if (!post.isOwnedBy(req.user._id)) {
       return next(createError(401, "Unauthorized"));
     }
 
