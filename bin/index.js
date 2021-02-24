@@ -14,6 +14,11 @@ var https = require("https");
  */
 
 var port = normalizePort(process.env.PORT || "4000");
+
+if(process.env.USE_HTTPS == 1){
+	port = "443"
+}
+
 app.set("port", port);
 
 /**
@@ -21,12 +26,13 @@ app.set("port", port);
  */
 
 var server;
-if (process.env.USE_HTTPS == "true") {
+if (process.env.USE_HTTPS == 1) {
   const options = {
     key: fs.readFileSync(process.env.KEY_FILE_PATH),
     cert: fs.readFileSync(process.env.CERT_FILE_PATH),
   };
-
+	console.log("Using HTTPS, with config...")
+	console.log(JSON.stringify(options))
   server = https.createServer(options, app);
 } else {
   server = http.createServer(app);
