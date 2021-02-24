@@ -3,12 +3,12 @@ const mongoose = require("mongoose"),
   Comment = require("./comment"),
   Post = require("./post"),
   { PostVote, CommentVote } = require("./vote"),
-  { DB_PASSWORD, DB_USER, DB_NAME } = process.env;
+  { DB_PASSWORD, DB_USER, DB_NAME, DB_CONNECTION_STRING } = process.env;
 
-const connectionString =
+const connectionString = DB_CONNECTION_STRING ||
   process.env.NODE_ENV !== "production"
     ? "mongodb://localhost:27017/test"
-    : `mongodb+srv://${DB_USER}:${DB_PASSWORD}@cluster0.ijyjs.mongodb.net/${DB_NAME}?retryWrites=true&w=majority`;
+    : "mongodb://localhost:27017/prod";
 
 mongoose.connect(connectionString, {
   useNewUrlParser: true, // Use new url parser instead of default deprecated one
