@@ -23,7 +23,7 @@ app.use(cookieParser());
 
 if (process.env.NODE_ENV === "development") {
   app.use(logger("dev"));
-  app.use(bodyLogger);
+  // app.use(bodyLogger);
 }
 
 app.use("/api", apiRouter);
