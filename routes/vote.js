@@ -39,9 +39,8 @@ router.post("/post/:post_id", decodeToken, async (req, res, next) => {
     }
 
     const post = await Post.findById(req.params.post_id);
-    const points = await post.updatePoints();
 
-    res.status(203).send({ points });
+    res.status(203).send({ points: post.points });
   } catch (error) {
     next(createError(500, error.message));
   }
@@ -75,9 +74,8 @@ router.post("/comment/:comment_id", decodeToken, async (req, res, next) => {
     }
 
     const comment = await Comment.findById(req.params.comment_id);
-    const points = await comment.updatePoints();
 
-    res.status(203).send({ points });
+    res.status(203).send({ points: comment.points });
   } catch (error) {
     next(createError(500, error.message));
   }
@@ -131,33 +129,35 @@ router.get("/user", decodeToken, async (req, res) => {
 });
 
 router.delete("/", decodeToken, async (req, res, next) => {
-  if (req.query.post) {
-    const vote = await PostVote.findOne({
-      post: req.query.post,
-      user: req.user._id,
-    });
-    console.log(vote);
-    await vote.remove();
+  try {
+    if (req.query.post) {
+      const vote = await PostVote.findOne({
+        post: req.query.post,
+        user: req.user._id,
+      });
+      await vote.remove();
 
-    const post = await Post.findById(req.query.post);
-    const points = await post.updatePoints();
+      const post = await Post.findById(vote.post);
 
-    res.status(200).send({ points });
-  } else if (req.query.comment) {
-    const vote = await CommentVote.findOne({
-      comment: req.query.comment,
-      user: req.user._id,
-    });
-    await vote.remove();
+      res.status(200).send({ points: post.points });
+    } else if (req.query.comment) {
+      const vote = await CommentVote.findOne({
+        comment: req.query.comment,
+        user: req.user._id,
+      });
+      await vote.remove();
 
-    const comment = await Comment.findById(req.query.comment);
-    const points = await comment.updatePoints();
+      const comment = await Comment.findById(req.query.comment);
 
-    res.status(200).send({ points });
-  } else {
-    return next(
-      createError(400, "Must include post or comment ID in query parameter")
-    );
+      res.status(200).send({ points: comment.points });
+    } else {
+      return next(
+        createError(400, "Must include post or comment ID in query parameter")
+      );
+    }
+  } catch (err) {
+    console.log(err);
+    next(createError(500, err.message));
   }
 });
 
