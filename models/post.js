@@ -52,32 +52,18 @@ postSchema.pre("save", async function (next) {
 });
 
 /**
- *  When a comment is removed, its _id property must be removed from the corresponding Chef document.
+ *  When a comment is removed, its _id property must be removed from the corresponding User document.
  */
-postSchema.post("remove", async () => {
-  try {
-    const User = mongoose.model("User");
-    const Comment = mongoose.model("Comment");
+postSchema.post("remove", async (doc) => {
+  const User = mongoose.model("User");
+  const Comment = mongoose.model("Comment");
 
-    const post = await Post.findById(this.post);
-    const user = await User.findById(this.user);
+  const user = await User.findById(doc.user);
 
-    post.comments = post.comments.filter((c) => c.id !== this.id);
-    post.save();
+  user.posts = user.posts.filter((p) => p._id !== doc._id);
+  user.save();
 
-    user.comments = user.comments.filter((c) => c.id !== this.id);
-    user.save();
-
-    if (this.parent) {
-      const parent = await Comment.findById(this.parent);
-      parent.children = parent.children.filter((c) => c.id !== this.id);
-      parent.save();
-    }
-
-    next();
-  } catch (err) {
-    next(err);
-  }
+  Comment.deleteMany(doc.comments);
 });
 
 postSchema.pre("save", function (next) {
@@ -87,8 +73,8 @@ postSchema.pre("save", function (next) {
   next();
 });
 
-postSchema.methods.isOwnedBy = function (userId) {
-  return this.user.toString() === userId;
+postSchema.methods.isOwnedBy = function (userDoc) {
+  return this.user.toString() == userDoc._id.toString();
 };
 
 postSchema.methods.updatePoints = async function () {
