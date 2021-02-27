@@ -58,7 +58,7 @@ function createComment(userId, postId, parentId = null) {
 
 async function populateDB() {
   const users = await Promise.all(
-    Array(100)
+    Array(30)
       .fill(0)
       .map(() => {
         return createUser();
@@ -66,7 +66,7 @@ async function populateDB() {
   );
 
   const posts = await Promise.all(
-    Array(25)
+    Array(10)
       .fill(0)
       .map(() => {
         const userId = _.sample(users)._id;
@@ -77,8 +77,8 @@ async function populateDB() {
 
   posts.forEach(async (post) => {
     // Generate a random number of upvotes and downvotes
-    const upvoteCount = _.random(1, 50);
-    const downvoteCount = _.random(1, 50);
+    const upvoteCount = _.random(1, 15);
+    const downvoteCount = _.random(1, 15);
 
     // Create documents for each vote, selecting a different
     // user for each
@@ -96,8 +96,8 @@ async function populateDB() {
   for (let i = 0; i < posts.length; i++) {
     const userId = _.sample(users)._id;
     const postId = posts[i]._id;
-    const numComments = _.random(2, 50);
-    const numReplies = _.random(2, 50);
+    const numComments = _.random(2, 25);
+    const numReplies = _.random(2, 25);
 
     const comments = await Promise.all(
       Array(numComments)
