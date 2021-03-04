@@ -26,7 +26,7 @@ const postSchema = new Schema({
   createdAt: {
     type: Date,
     require: true,
-    default: new Date(),
+    default: () => new Date(),
   },
   updatedAt: Date,
 });
